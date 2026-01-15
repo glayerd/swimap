@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Search, MapPin, X, Navigation, Phone, Droplets } from 'lucide-react';
-
 // [중요] VS Code에서 실행할 때는 아래 줄의 주석(//)을 지워서 활성화하세요!
 // import { Map, MapMarker } from "react-kakao-maps-sdk";
 
@@ -31,8 +30,7 @@ const MapMarker = ({ position, onClick }) => (
 );
 // --- 임시 Map 컴포넌트 끝 (여기까지 지우세요) ---
 
-
-// 2. 가짜 데이터 (이제 실제 서울 위도/경도 좌표가 들어있습니다)
+// 데이터: 서울의 실제 좌표가 들어있습니다.
 const MOCK_DATA = [
   {
     id: 1,
@@ -43,8 +41,8 @@ const MOCK_DATA = [
     freeSwimTime: "08:00 - 08:50",
     price: "4,000원",
     tags: ["50m레인", "자연채광"],
-    lat: 37.5642135, // 위도
-    lng: 126.9016985 // 경도
+    lat: 37.5642135,
+    lng: 126.9016985
   },
   {
     id: 2,
@@ -76,14 +74,13 @@ const App = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedPool, setSelectedPool] = useState(null);
   
-  // 지도의 중심 좌표 (기본값: 서울시청) - 지도가 처음 켜질 때 어디를 보여줄지 결정합니다.
+  // 지도의 중심 좌표 (기본값: 서울시청)
   const [center, setCenter] = useState({ lat: 37.5665, lng: 126.9780 });
 
   const filteredPools = MOCK_DATA.filter((pool) =>
     pool.name.includes(searchTerm) || pool.location.includes(searchTerm)
   );
 
-  // 리스트에서 수영장을 클릭하면 -> 그 수영장 위치로 지도를 이동시키는 함수
   const handlePoolClick = (pool) => {
     setSelectedPool(pool);
     setCenter({ lat: pool.lat, lng: pool.lng }); 
@@ -91,9 +88,7 @@ const App = () => {
 
   return (
     <div className="app-container">
-      {/* 스타일 시트 (CSS) */}
       <style>{`
-        /* Vite 기본 스타일 초기화 */
         :root { width: 100%; max-width: 100% !important; margin: 0 !important; padding: 0 !important; text-align: left !important; }
         body { margin: 0 !important; padding: 0 !important; display: block !important; place-items: unset !important; min-width: 100% !important; min-height: 100vh; background-color: #f8fafc; }
         #root { width: 100%; max-width: 100%; margin: 0 auto; padding: 0; text-align: left; }
@@ -207,12 +202,12 @@ const App = () => {
             </div>
           </div>
 
-          {/* 오른쪽 지도 (카카오맵) */}
+          {/* 오른쪽 지도 (진짜 카카오맵) */}
           <div className="map-view">
             <Map 
               center={center} 
               style={{ width: "100%", height: "100%" }}
-              level={5} // 확대 레벨 (작을수록 확대)
+              level={5} 
             >
               {filteredPools.map((pool) => (
                 <MapMarker
