@@ -1,74 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Search, MapPin, X, Navigation, Phone, Droplets } from 'lucide-react';
-// [중요] VS Code에서 실행할 때는 아래 줄의 주석(//)을 지워서 활성화하세요!
-// import { Map, MapMarker } from "react-kakao-maps-sdk";
 
-// [중요] VS Code에서 실행할 때는 아래의 '임시 Map 컴포넌트'부터 '여기까지' 코드를 모두 지우세요!
-// --- 임시 Map 컴포넌트 시작 (미리보기용) ---
-const Map = ({ center, style, level, children }) => (
-  <div style={{ ...style, backgroundColor: '#f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'relative', overflow: 'hidden' }}>
-    <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(#cbd5e1 1px, transparent 1px)', backgroundSize: '20px 20px', opacity: 0.5 }}></div>
-    <p style={{ color: '#64748b', fontWeight: 'bold', zIndex: 10 }}>실제 카카오맵은 로컬에서 표시됩니다</p>
-    <p style={{ color: '#94a3b8', fontSize: '0.8rem', zIndex: 10 }}>중심 좌표: {center.lat}, {center.lng}</p>
-    {children}
-  </div>
-);
-const MapMarker = ({ position, onClick }) => (
-  <div 
-    onClick={onClick}
-    style={{ 
-      position: 'absolute', 
-      left: '50%', 
-      top: '50%', 
-      transform: 'translate(-50%, -100%)', // 대략적인 위치 흉내
-      cursor: 'pointer',
-      zIndex: 20
-    }}
-  >
-    <img src="https://t1.daumcdn.net/localimg/localimages/07/mapapidoc/markerStar.png" style={{width: '24px', height: '35px'}} alt="marker"/>
-  </div>
-);
-// --- 임시 Map 컴포넌트 끝 (여기까지 지우세요) ---
+// 1. 진짜 카카오맵 도구 (활성화됨)
+import { Map, MapMarker } from "react-kakao-maps-sdk";
 
-// 데이터: 서울의 실제 좌표가 들어있습니다.
-const MOCK_DATA = [
-  {
-    id: 1,
-    name: "마포구민체육센터",
-    location: "서울 마포구 월드컵로 25길",
-    status: "OPEN",
-    time: "06:00 - 22:00",
-    freeSwimTime: "08:00 - 08:50",
-    price: "4,000원",
-    tags: ["50m레인", "자연채광"],
-    lat: 37.5642135,
-    lng: 126.9016985
-  },
-  {
-    id: 2,
-    name: "올림픽수영장",
-    location: "서울 송파구 올림픽로",
-    status: "BREAK",
-    time: "09:00 - 18:00",
-    freeSwimTime: "13:00 - 13:50",
-    price: "5,000원",
-    tags: ["국제규격", "다이빙풀"],
-    lat: 37.515904, 
-    lng: 127.125585
-  },
-  {
-    id: 3,
-    name: "서울 YMCA 수영장",
-    location: "서울 종로구 종로 69",
-    status: "OPEN",
-    time: "06:00 - 21:00",
-    freeSwimTime: "09:00 - 11:50",
-    price: "8,000원",
-    tags: ["역사깊은", "종로중심"],
-    lat: 37.570028,
-    lng: 126.985054
-  },
-];
+// 2. Firebase 도구 (활성화됨)
+import { db } from "./firebase";
+import { collection, getDocs } from "firebase/firestore";
 
 const App = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -77,7 +15,36 @@ const App = () => {
   // 지도의 중심 좌표 (기본값: 서울시청)
   const [center, setCenter] = useState({ lat: 37.5665, lng: 126.9780 });
 
-  const filteredPools = MOCK_DATA.filter((pool) =>
+  // 3. 데이터를 담을 그릇 (처음엔 비어있음)
+  const [pools, setPools] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // 4. 앱이 켜지면 DB에서 진짜 데이터 가져오기
+  useEffect(() => {
+    const fetchPools = async () => {
+      try {
+        // 'pools' 컬렉션의 문서를 모두 가져옵니다.
+        const querySnapshot = await getDocs(collection(db, "pools"));
+        
+        const poolList = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        }));
+
+        console.log("🔥 Firebase에서 가져온 데이터:", poolList);
+        setPools(poolList);
+        setLoading(false);
+      } catch (error) {
+        console.error("❌ 데이터 가져오기 실패:", error);
+        setLoading(false);
+      }
+    };
+
+    fetchPools();
+  }, []);
+
+  // 검색 필터링
+  const filteredPools = pools.filter((pool) =>
     pool.name.includes(searchTerm) || pool.location.includes(searchTerm)
   );
 
@@ -86,18 +53,35 @@ const App = () => {
     setCenter({ lat: pool.lat, lng: pool.lng }); 
   };
 
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="loading-spinner"></div>
+        <p>🏊 수영장 정보를 불러오고 있습니다...</p>
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
+      {/* 스타일 시트 (CSS) */}
       <style>{`
         :root { width: 100%; max-width: 100% !important; margin: 0 !important; padding: 0 !important; text-align: left !important; }
         body { margin: 0 !important; padding: 0 !important; display: block !important; place-items: unset !important; min-width: 100% !important; min-height: 100vh; background-color: #f8fafc; }
         #root { width: 100%; max-width: 100%; margin: 0 auto; padding: 0; text-align: left; }
 
         .app-container { font-family: 'Pretendard', sans-serif; min-height: 100vh; color: #334155; width: 100%; position: relative; }
+        
+        /* 로딩 화면 스타일 */
+        .loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px; }
+        .loading-spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
         .header { position: fixed; top: 0; left: 0; width: 100%; background: rgba(255, 255, 255, 0.9); backdrop-filter: blur(10px); border-bottom: 1px solid #e2e8f0; z-index: 100; height: 64px; display: flex; align-items: center; justify-content: center; }
         .header-content { width: 100%; max-width: 1200px; padding: 0 20px; display: flex; justify-content: space-between; align-items: center; }
         .logo { display: flex; align-items: center; gap: 8px; font-weight: bold; font-size: 1.25rem; color: #0f172a; }
         .logo-icon { background: #2563eb; color: white; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+        
         .main { padding-top: 100px; padding-bottom: 40px; max-width: 1200px; width: 100%; margin: 0 auto; padding-left: 20px; padding-right: 20px; display: flex; flex-direction: column; align-items: center; box-sizing: border-box; }
         .hero-title { font-size: 2.5rem; font-weight: 800; margin-bottom: 10px; color: #0f172a; text-align: center; word-break: keep-all; }
         .hero-desc { font-size: 1.1rem; color: #64748b; margin-bottom: 40px; text-align: center; word-break: keep-all; }
@@ -120,7 +104,6 @@ const App = () => {
         .status-CLOSED { background: #fee2e2; color: #b91c1c; }
         .status-BREAK { background: #ffedd5; color: #c2410c; }
 
-        /* 지도 영역 스타일 */
         .map-view { flex: 1; background: #f1f5f9; position: relative; overflow: hidden; }
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 200; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
@@ -178,27 +161,34 @@ const App = () => {
               검색 결과 <span style={{color: '#2563eb'}}>{filteredPools.length}</span>곳
             </div>
             <div className="list-content">
-              {filteredPools.map((pool) => (
-                <div 
-                  key={pool.id}
-                  className={`pool-card ${selectedPool?.id === pool.id ? 'active' : ''}`}
-                  onClick={() => handlePoolClick(pool)}
-                >
-                  <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
-                    <strong style={{fontSize: '1.1rem'}}>{pool.name}</strong>
-                    <StatusBadge status={pool.status} />
+              {filteredPools.length > 0 ? (
+                filteredPools.map((pool) => (
+                  <div 
+                    key={pool.id}
+                    className={`pool-card ${selectedPool?.id === pool.id ? 'active' : ''}`}
+                    onClick={() => handlePoolClick(pool)}
+                  >
+                    <div style={{display: 'flex', justifyContent: 'space-between', marginBottom: '4px'}}>
+                      <strong style={{fontSize: '1.1rem'}}>{pool.name}</strong>
+                      <StatusBadge status={pool.status} />
+                    </div>
+                    <div style={{color: '#64748b', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px'}}>
+                      <MapPin size={14} /> {pool.location}
+                    </div>
+                    {/* 데이터 필드가 없을 경우를 대비한 안전 장치 */}
+                    <div style={{fontSize: '0.85rem', color: '#2563eb', background: '#eff6ff', padding: '4px 8px', borderRadius: '6px', display: 'inline-block', marginBottom: '8px', fontWeight: 'bold'}}>
+                      🏊 자유수영: {pool.freeSwimTime || "정보 없음"}
+                    </div>
+                    <div>
+                      {pool.tags && pool.tags.map((tag, i) => <span key={i} className="tag">#{tag}</span>)}
+                    </div>
                   </div>
-                  <div style={{color: '#64748b', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px'}}>
-                    <MapPin size={14} /> {pool.location}
-                  </div>
-                   <div style={{fontSize: '0.85rem', color: '#2563eb', background: '#eff6ff', padding: '4px 8px', borderRadius: '6px', display: 'inline-block', marginBottom: '8px', fontWeight: 'bold'}}>
-                    🏊 자유수영: {pool.freeSwimTime}
-                  </div>
-                  <div>
-                    {pool.tags.map((tag, i) => <span key={i} className="tag">#{tag}</span>)}
-                  </div>
+                ))
+              ) : (
+                <div style={{padding: '20px', textAlign: 'center', color: '#94a3b8'}}>
+                  검색 결과가 없습니다.
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
@@ -243,7 +233,7 @@ const App = () => {
                   <div style={{background: 'white', padding: '8px', borderRadius: '50%', color: '#2563eb'}}><Droplets size={20}/></div>
                   <div>
                     <div style={{fontSize: '0.8rem', color: '#64748b', fontWeight: 'bold'}}>자유수영 시간</div>
-                    <div style={{fontSize: '1.1rem', fontWeight: '800', color: '#2563eb'}}>{selectedPool.freeSwimTime}</div>
+                    <div style={{fontSize: '1.1rem', fontWeight: '800', color: '#2563eb'}}>{selectedPool.freeSwimTime || "정보 없음"}</div>
                   </div>
                 </div>
                 <StatusBadge status={selectedPool.status} />
@@ -251,11 +241,11 @@ const App = () => {
 
               <div className="info-row">
                 <span className="info-label">전체 운영</span>
-                <span className="info-value">{selectedPool.time}</span>
+                <span className="info-value">{selectedPool.time || "정보 없음"}</span>
               </div>
               <div className="info-row">
                 <span className="info-label">일일 입장료</span>
-                <span className="info-value">{selectedPool.price}</span>
+                <span className="info-value">{selectedPool.price || "정보 없음"}</span>
               </div>
               
               <div className="btn-group">
