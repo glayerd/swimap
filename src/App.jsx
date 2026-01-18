@@ -1,10 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, X, Navigation, Phone, Droplets } from 'lucide-react';
-
-// 1. 진짜 카카오맵 도구 (활성화됨)
 import { Map, MapMarker } from "react-kakao-maps-sdk";
-
-// 2. Firebase 도구 (활성화됨)
 import { db } from "./firebase";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -15,23 +11,21 @@ const App = () => {
   // 지도의 중심 좌표 (기본값: 서울시청)
   const [center, setCenter] = useState({ lat: 37.5665, lng: 126.9780 });
 
-  // 3. 데이터를 담을 그릇 (처음엔 비어있음)
+  // 데이터를 담을 그릇
   const [pools, setPools] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 4. 앱이 켜지면 DB에서 진짜 데이터 가져오기
+  // 앱이 켜지면 DB에서 데이터 가져오기
   useEffect(() => {
     const fetchPools = async () => {
       try {
-        // 'pools' 컬렉션의 문서를 모두 가져옵니다.
         const querySnapshot = await getDocs(collection(db, "pools"));
-        
         const poolList = querySnapshot.docs.map(doc => ({
           id: doc.id,
           ...doc.data()
         }));
 
-        console.log("🔥 Firebase에서 가져온 데이터:", poolList);
+        console.log("🔥 Firebase 데이터:", poolList);
         setPools(poolList);
         setLoading(false);
       } catch (error) {
@@ -72,7 +66,6 @@ const App = () => {
 
         .app-container { font-family: 'Pretendard', sans-serif; min-height: 100vh; color: #334155; width: 100%; position: relative; }
         
-        /* 로딩 화면 스타일 */
         .loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px; }
         .loading-spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -120,10 +113,17 @@ const App = () => {
         .btn-primary { background: #2563eb; color: white; }
         .btn-secondary { background: #f1f5f9; color: #334155; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @media (max-width: 768px) { .hero-title { font-size: 1.8rem; } .dashboard { flex-direction: column; height: auto; } .list-view { width: 100%; height: 300px; border-right: none; border-bottom: 1px solid #e2e8f0; } .map-view { height: 400px; } .header-content { padding: 0 16px; } .main { padding-left: 16px; padding-right: 16px; } }
+        
+        @media (max-width: 768px) { 
+          .hero-title { font-size: 1.8rem; } 
+          .dashboard { flex-direction: column; height: auto; } 
+          .list-view { width: 100%; height: 300px; border-right: none; border-bottom: 1px solid #e2e8f0; } 
+          .map-view { height: 400px; } 
+          .header-content { padding: 0 16px; } 
+          .main { padding-left: 16px; padding-right: 16px; } 
+        }
       `}</style>
 
-      {/* 헤더 */}
       <header className="header">
         <div className="header-content">
           <div className="logo">
@@ -136,12 +136,10 @@ const App = () => {
         </div>
       </header>
 
-      {/* 메인 */}
       <main className="main">
         <h1 className="hero-title">오늘, 물살을 가를<br className="md:hidden"/> 준비 되셨나요?</h1>
         <p className="hero-desc">내 주변 자유수영 가능한 수영장을<br className="md:hidden"/> 실시간으로 확인하세요.</p>
 
-        {/* 검색창 */}
         <div className="search-box">
           <Search className="search-icon" size={20} />
           <input 
@@ -153,9 +151,7 @@ const App = () => {
           />
         </div>
 
-        {/* 대시보드 */}
         <div className="dashboard">
-          {/* 왼쪽 리스트 */}
           <div className="list-view">
             <div className="list-header">
               검색 결과 <span style={{color: '#2563eb'}}>{filteredPools.length}</span>곳
@@ -175,7 +171,6 @@ const App = () => {
                     <div style={{color: '#64748b', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '8px'}}>
                       <MapPin size={14} /> {pool.location}
                     </div>
-                    {/* 데이터 필드가 없을 경우를 대비한 안전 장치 */}
                     <div style={{fontSize: '0.85rem', color: '#2563eb', background: '#eff6ff', padding: '4px 8px', borderRadius: '6px', display: 'inline-block', marginBottom: '8px', fontWeight: 'bold'}}>
                       🏊 자유수영: {pool.freeSwimTime || "정보 없음"}
                     </div>
@@ -192,11 +187,10 @@ const App = () => {
             </div>
           </div>
 
-          {/* 오른쪽 지도 (진짜 카카오맵) */}
           <div className="map-view">
             <Map 
               center={center} 
-              style={{ width: "100%", height: "100%" }}
+              style={{ width: "100%", height: "600px" }} 
               level={5} 
             >
               {filteredPools.map((pool) => (
@@ -215,7 +209,6 @@ const App = () => {
         </div>
       </main>
 
-      {/* 팝업 모달 */}
       {selectedPool && (
         <div className="modal-overlay" onClick={() => setSelectedPool(null)}>
           <div className="modal-content" onClick={e => e.stopPropagation()}>
