@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Search, MapPin, X, Navigation, Phone, Droplets } from 'lucide-react';
+// 1. 진짜 카카오맵 도구 (활성화됨)
 import { Map, MapMarker } from "react-kakao-maps-sdk";
+
+// 2. Firebase 도구 (활성화됨)
 import { db } from "./firebase";
 import { collection, getDocs } from "firebase/firestore";
 
@@ -11,11 +14,11 @@ const App = () => {
   // 지도의 중심 좌표 (기본값: 서울시청)
   const [center, setCenter] = useState({ lat: 37.5665, lng: 126.9780 });
 
-  // 데이터를 담을 그릇
+  // 3. 데이터를 담을 그릇
   const [pools, setPools] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 앱이 켜지면 DB에서 데이터 가져오기
+  // 4. 앱이 켜지면 DB에서 데이터 가져오기
   useEffect(() => {
     const fetchPools = async () => {
       try {
@@ -66,6 +69,7 @@ const App = () => {
 
         .app-container { font-family: 'Pretendard', sans-serif; min-height: 100vh; color: #334155; width: 100%; position: relative; }
         
+        /* 로딩 화면 스타일 */
         .loading-screen { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; gap: 20px; }
         .loading-spinner { width: 40px; height: 40px; border: 4px solid #e2e8f0; border-top: 4px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
@@ -97,7 +101,8 @@ const App = () => {
         .status-CLOSED { background: #fee2e2; color: #b91c1c; }
         .status-BREAK { background: #ffedd5; color: #c2410c; }
 
-        .map-view { flex: 1; background: #f1f5f9; position: relative; overflow: hidden; }
+        /* [중요] 지도가 안 보이지 않도록 높이를 강제합니다 */
+        .map-view { flex: 1; background: #f1f5f9; position: relative; overflow: hidden; height: 100%; min-height: 600px; }
 
         .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 200; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
         .modal-content { background: white; width: 90%; max-width: 400px; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); animation: slideUp 0.3s ease-out; }
@@ -113,15 +118,7 @@ const App = () => {
         .btn-primary { background: #2563eb; color: white; }
         .btn-secondary { background: #f1f5f9; color: #334155; }
         @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        
-        @media (max-width: 768px) { 
-          .hero-title { font-size: 1.8rem; } 
-          .dashboard { flex-direction: column; height: auto; } 
-          .list-view { width: 100%; height: 300px; border-right: none; border-bottom: 1px solid #e2e8f0; } 
-          .map-view { height: 400px; } 
-          .header-content { padding: 0 16px; } 
-          .main { padding-left: 16px; padding-right: 16px; } 
-        }
+        @media (max-width: 768px) { .hero-title { font-size: 1.8rem; } .dashboard { flex-direction: column; height: auto; } .list-view { width: 100%; height: 300px; border-right: none; border-bottom: 1px solid #e2e8f0; } .map-view { height: 400px; } .header-content { padding: 0 16px; } .main { padding-left: 16px; padding-right: 16px; } }
       `}</style>
 
       <header className="header">
@@ -188,9 +185,10 @@ const App = () => {
           </div>
 
           <div className="map-view">
+            {/* 높이를 100%로 주되, CSS에서 min-height를 확보해줌 */}
             <Map 
               center={center} 
-              style={{ width: "100%", height: "600px" }} 
+              style={{ width: "100%", height: "100%" }} 
               level={5} 
             >
               {filteredPools.map((pool) => (
